@@ -14,11 +14,11 @@ export const Hero: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8 text-center lg:text-left z-10">
           <h1 className="text-5xl md:text-6xl font-display font-extrabold text-alto-navy leading-[1.1]">
-            Alto organise votre vie de famille, <span className="text-alto-sage bg-alto-navy/5 px-2 rounded-lg inline-block transform rotate-[-1deg]">automatiquement.</span>
+            Et si l’IA allégeait enfin la <span className="text-alto-sage bg-alto-navy/5 px-2 rounded-lg inline-block transform rotate-[-1deg]">charge mentale</span> familiale ?
           </h1>
           
           <p className="text-xl text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-            Moins d’oublis, moins de charge mentale. Plus de sérénité. Alto gère vos mails et votre agenda pour vous.
+            Alto anticipe, organise et simplifie le quotidien des familles actives — pour que vous retrouviez du temps, de la clarté et du calme.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
@@ -29,7 +29,7 @@ export const Hero: React.FC = () => {
             
             <button className="group flex items-center gap-2 font-bold text-alto-navy hover:text-alto-terra transition-colors px-6 py-3">
               <PlayCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              Voir comment ça marche
+              Voir la démo (1 min)
             </button>
           </div>
           
