@@ -1,7 +1,6 @@
 import React from 'react';
 import { Users, Baby, Plus, X, School } from 'lucide-react';
-import { FamilyContext, Child, Parent } from '../../types';
-import { Button } from '../ui/Button';
+import { FamilyContext, Child } from '../../types';
 
 interface FamilySettingsProps {
   context: FamilyContext;

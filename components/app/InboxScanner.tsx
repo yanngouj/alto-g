@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, Loader2, Calendar, CheckSquare, Quote, Mail, Import, Send, CheckCircle2, Smartphone, X, Clock, Signal, AlertCircle, Paperclip, BrainCircuit } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, ArrowRight, Loader2, Calendar, CheckSquare, Quote, Mail, Send, CheckCircle2, Smartphone, X, Clock, AlertCircle, Paperclip, BrainCircuit } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { analyzeContent, AnalysisResult } from '../../services/ai';
 import { FamilyContext, ServiceIntegration } from '../../types';

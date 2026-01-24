@@ -1,9 +1,8 @@
-
-import React, { useState, useEffect } from 'react';
-import { FamilyContext, ServiceIntegration, Child, Parent } from '../../types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FamilyContext, ServiceIntegration, Child } from '../../types';
 import { Button } from '../ui/Button';
-import { Users, Mail, CheckCircle2, Plus, X, Baby, ArrowRight, Loader2, Info, Copy, Calendar } from 'lucide-react';
-import { initGoogleAuth, signInWithGoogle } from '../../services/google';
+import { Users, Mail, CheckCircle2, Plus, X, Baby, ArrowRight, Loader2, Info, Copy, Calendar, AlertCircle } from 'lucide-react';
+import { initGoogleAuth, signInWithGoogle, isGoogleAuthReady, getErrorMessage } from '../../services/google';
 
 interface OnboardingWizardProps {
   onComplete: (data: { family: FamilyContext; services: ServiceIntegration[] }) => void;
@@ -11,43 +10,75 @@ interface OnboardingWizardProps {
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
-  
+
   // STEP 1 STATE: Family
   const [family, setFamily] = useState<FamilyContext>({
     parents: [{ id: 'p1', name: 'Moi', isCurrentUser: true }],
     children: []
   });
-  
+
   // STEP 2 STATE: Services (Rationalized for MVP)
   const [services, setServices] = useState<ServiceIntegration[]>([
     { id: 'gmail', name: 'Gmail', connected: false, type: 'mail', color: 'bg-red-100 text-red-600' },
     { id: 'gcal', name: 'Google Agenda', connected: false, type: 'calendar', color: 'bg-blue-50 text-blue-500' },
-    { id: 'whatsapp', name: 'WhatsApp', connected: false, type: 'messaging', color: 'bg-green-100 text-green-600' }, // Hidden in wizard, present in dashboard
+    { id: 'whatsapp', name: 'WhatsApp', connected: false, type: 'messaging', color: 'bg-green-100 text-green-600' },
   ]);
 
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [currentOrigin, setCurrentOrigin] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
 
-  // Initialize Google Auth on mount
+  // Handle successful Google auth
+  const handleGoogleSuccess = useCallback((token: string) => {
+    setIsAuthenticating(false);
+    setAuthError(null);
+    setServices(prev => prev.map(s =>
+      (s.id === 'gmail' || s.id === 'gcal') ? { ...s, connected: true, accessToken: token } : s
+    ));
+  }, []);
+
+  // Handle auth errors
+  const handleGoogleError = useCallback((error: string) => {
+    setIsAuthenticating(false);
+    setAuthError(getErrorMessage(error));
+  }, []);
+
+  // Initialize Google Auth on mount with retry logic
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentOrigin(window.location.origin);
     }
 
-    initGoogleAuth((response) => {
-      if (response && response.access_token) {
-        handleGoogleSuccess(response.access_token);
-      }
-    });
-  }, []);
+    const initAuth = () => {
+      const success = initGoogleAuth((response) => {
+        if (response.error) {
+          handleGoogleError(response.error);
+        } else if (response.access_token) {
+          handleGoogleSuccess(response.access_token);
+        }
+      });
+      setIsGoogleReady(success);
+      return success;
+    };
 
-  const handleGoogleSuccess = (token: string) => {
-    setIsAuthenticating(false);
-    // Connect BOTH Gmail and Calendar
-    setServices(prev => prev.map(s => 
-      (s.id === 'gmail' || s.id === 'gcal') ? { ...s, connected: true, accessToken: token } : s
-    ));
-  };
+    // Try to init immediately
+    if (!initAuth()) {
+      // If GIS script not loaded yet, wait and retry
+      const checkInterval = setInterval(() => {
+        if (window.google?.accounts?.oauth2) {
+          if (initAuth()) {
+            clearInterval(checkInterval);
+          }
+        }
+      }, 500);
+
+      // Stop checking after 10 seconds
+      setTimeout(() => clearInterval(checkInterval), 10000);
+
+      return () => clearInterval(checkInterval);
+    }
+  }, [handleGoogleSuccess, handleGoogleError]);
 
   // Helpers
   const addChild = () => {
@@ -74,24 +105,32 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     ));
   };
 
-  const handleConnectGoogle = async () => {
+  const handleConnectGoogle = () => {
     const isConnected = services.some(s => (s.id === 'gmail' || s.id === 'gcal') && s.connected);
-    
+
     if (isConnected) {
        // Disconnect both
-       setServices(prev => prev.map(s => 
+       setServices(prev => prev.map(s =>
          (s.id === 'gmail' || s.id === 'gcal') ? { ...s, connected: false, accessToken: undefined } : s
        ));
+       setAuthError(null);
        return;
     }
 
+    setAuthError(null);
     setIsAuthenticating(true);
+
     try {
-      // Attempt real sign in
+      if (!isGoogleReady && !isGoogleAuthReady()) {
+        throw new Error("GOOGLE_AUTH_NOT_INITIALIZED");
+      }
       signInWithGoogle();
-      // Note: success is handled in the callback defined in useEffect
+      // Success is handled in the callback defined in useEffect
     } catch (error) {
-      console.warn("Real Auth failed or missing Client ID. Using simulation.");
+      console.warn("Real Auth failed:", error);
+      if (error instanceof Error) {
+        setAuthError(getErrorMessage(error.message));
+      }
       // Fallback to simulation with delay
       setTimeout(() => {
         forceSimulationMode();
@@ -251,8 +290,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 </div>
               </div>
 
+              {/* Error Display */}
+              {authError && (
+                <div className="mx-auto max-w-md w-full bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-700">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-500" />
+                    <div>
+                      <p className="font-semibold">Erreur de connexion</p>
+                      <p className="text-xs mt-1">{authError}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="max-w-md mx-auto w-full">
-                  <div 
+                  <div
                     onClick={() => !isAuthenticating && handleConnectGoogle()}
                     className={`relative p-8 rounded-3xl border-2 cursor-pointer transition-all duration-300 flex flex-col items-center text-center gap-6 group hover:shadow-lg ${
                       googleConnected 

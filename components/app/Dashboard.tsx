@@ -82,7 +82,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         // Start Auth Flow
         try {
           signInWithGoogle();
-        } catch(e) {
+        } catch {
           console.warn("Google Auth failed (missing Client ID?). Falling back to demo mode.");
           // Fallback to demo mode visual toggle
           setIntegrations(prev => prev.map(s => s.id === id ? { ...s, connected: true } : s));

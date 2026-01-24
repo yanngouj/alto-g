@@ -1,9 +1,25 @@
+/// <reference types="vite/client" />
 import { GoogleGenAI, Type } from "@google/genai";
 import { FamilyContext } from "../types";
 
-// Initialize Gemini
-// Ensure API KEY is present, otherwise explicit error will be thrown during call if check fails here
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Get API key from environment (supports both Vite and process.env fallback)
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY ||
+                process.env.GEMINI_API_KEY ||
+                process.env.API_KEY ||
+                '';
+
+// Initialize Gemini lazily to allow for API key check
+let ai: GoogleGenAI | null = null;
+
+const getAI = (): GoogleGenAI => {
+  if (!API_KEY) {
+    throw new Error("Clé API Gemini manquante. Ajoutez VITE_GEMINI_API_KEY dans votre fichier .env");
+  }
+  if (!ai) {
+    ai = new GoogleGenAI({ apiKey: API_KEY });
+  }
+  return ai;
+};
 
 export interface ExtractedEvent {
   title: string;
@@ -47,9 +63,7 @@ export interface NewsResult {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const analyzeContent = async (text: string, context: FamilyContext): Promise<AnalysisResult> => {
-  if (!process.env.API_KEY) {
-    throw new Error("Clé API manquante (process.env.API_KEY)");
-  }
+  const gemini = getAI();
 
   // Construct context string for the model
   const childrenContext = context.children.map(c => `${c.name} (School/Context: ${c.schoolName})`).join(', ');
@@ -57,7 +71,7 @@ export const analyzeContent = async (text: string, context: FamilyContext): Prom
 
   const makeRequest = async (attempt: number = 1): Promise<AnalysisResult> => {
     try {
-      const response = await ai.models.generateContent({
+      const response = await gemini.models.generateContent({
         model: "gemini-2.5-flash",
         contents: {
           role: 'user',
@@ -171,8 +185,9 @@ export const analyzeContent = async (text: string, context: FamilyContext): Prom
 };
 
 export const fetchFamilyNews = async (): Promise<NewsResult> => {
+  const gemini = getAI();
   try {
-    const response = await ai.models.generateContent({
+    const response = await gemini.models.generateContent({
       model: "gemini-2.5-flash",
       contents: "Quelles sont les 3 actualités ou tendances récentes les plus pertinentes sur l'organisation familiale, la charge mentale parentale ou les nouvelles technologies pour les familles ? Fais un résumé concis en français.",
       config: {

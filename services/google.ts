@@ -1,10 +1,53 @@
+/// <reference types="vite/client" />
 import { FamilyContext } from "../types";
 
 // This service handles Google OAuth and Gmail API interactions
 
-// REPLACE THIS WITH YOUR REAL CLIENT ID IF YOU WANT REAL AUTH
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '513802369002-ogajiab8l9433p8o3uue17hhmfpm4n13.apps.googleusercontent.com'; 
+// Google Client ID - loaded from environment variable or fallback to demo
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+                  process.env.GOOGLE_CLIENT_ID ||
+                  '513802369002-ogajiab8l9433p8o3uue17hhmfpm4n13.apps.googleusercontent.com';
+
+// Error messages in French for better UX
+const ERROR_MESSAGES: Record<string, string> = {
+  API_NOT_ENABLED: "L'API Gmail n'est pas activée. Activez-la dans la console Google Cloud.",
+  GOOGLE_AUTH_NOT_INITIALIZED: "Connexion Google non initialisée. Rechargez la page.",
+  INVALID_TOKEN: "Token d'accès invalide ou expiré. Reconnectez-vous.",
+  NETWORK_ERROR: "Erreur réseau. Vérifiez votre connexion internet.",
+  CALENDAR_API_NOT_ENABLED: "L'API Google Calendar n'est pas activée dans la console Google Cloud.",
+};
+
+export const getErrorMessage = (code: string): string => {
+  return ERROR_MESSAGES[code] || `Erreur: ${code}`;
+};
+
 const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.events.readonly';
+
+// Type declarations for Google Identity Services
+interface TokenClient {
+  requestAccessToken: (options?: { prompt?: string }) => void;
+}
+
+interface GoogleOAuthResponse {
+  access_token: string;
+  error?: string;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        oauth2: {
+          initTokenClient: (config: {
+            client_id: string;
+            scope: string;
+            callback: (response: GoogleOAuthResponse) => void;
+          }) => TokenClient;
+        };
+      };
+    };
+  }
+}
 
 export interface GmailMessage {
   id: string;
@@ -19,7 +62,7 @@ export interface GmailMessage {
   breakdown?: string[]; // Reasons for the score (debug)
 }
 
-let tokenClient: any;
+let tokenClient: TokenClient | null = null;
 
 // --- Utilities ---
 
@@ -181,31 +224,34 @@ const getDateDaysAgo = (days: number): string => {
 
 // --- Auth ---
 
-export const initGoogleAuth = (callback: (response: any) => void) => {
-  if (typeof window !== 'undefined') {
-    if ((window as any).google && CLIENT_ID) {
-      try {
-        tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
-          client_id: CLIENT_ID,
-          scope: SCOPES,
-          callback: callback,
-        });
-        return true;
-      } catch (e) {
-        console.error("Failed to initialize Google Token Client", e);
-        return false;
-      }
+export const initGoogleAuth = (callback: (response: GoogleOAuthResponse) => void): boolean => {
+  if (typeof window !== 'undefined' && window.google && CLIENT_ID) {
+    try {
+      tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: callback,
+      });
+      return true;
+    } catch (e) {
+      console.error("Échec de l'initialisation Google OAuth:", e);
+      return false;
     }
   }
+  console.warn("Google Identity Services non disponible ou CLIENT_ID manquant");
   return false;
 };
 
-export const signInWithGoogle = () => {
+export const isGoogleAuthReady = (): boolean => {
+  return tokenClient !== null;
+};
+
+export const signInWithGoogle = (): void => {
   if (tokenClient) {
     tokenClient.requestAccessToken({ prompt: '' });
   } else {
-    console.warn("Google Auth not initialized or Client ID missing.");
-    throw new Error("CLIENT_ID_MISSING");
+    console.error("Google Auth non initialisé. Vérifiez que le script GIS est chargé et que CLIENT_ID est configuré.");
+    throw new Error("GOOGLE_AUTH_NOT_INITIALIZED");
   }
 };
 
@@ -251,10 +297,18 @@ export const fetchGmailMessages = async (
 
     if (!response.ok) {
       const errorReason = listData.error?.errors?.[0]?.reason;
+      const errorCode = listData.error?.code;
+
       if (errorReason === 'accessNotConfigured') {
-         throw new Error("API_NOT_ENABLED");
+        throw new Error("API_NOT_ENABLED");
       }
-      throw new Error(JSON.stringify(listData.error));
+      if (errorCode === 401) {
+        throw new Error("INVALID_TOKEN");
+      }
+      if (errorCode === 403) {
+        throw new Error("API_NOT_ENABLED");
+      }
+      throw new Error(listData.error?.message || JSON.stringify(listData.error));
     }
 
     let messages = listData.messages || [];
@@ -376,21 +430,35 @@ export const fetchCalendarEvents = async (accessToken: string, dateRange?: { sta
     );
 
     const data = await response.json();
-    
+
+    if (!response.ok) {
+      const errorCode = data.error?.code;
+      if (errorCode === 401) {
+        throw new Error("INVALID_TOKEN");
+      }
+      if (errorCode === 403 || data.error?.errors?.[0]?.reason === 'accessNotConfigured') {
+        throw new Error("CALENDAR_API_NOT_ENABLED");
+      }
+      throw new Error(data.error?.message || "Erreur lors de la récupération de l'agenda");
+    }
+
     if (!data.items || data.items.length === 0) {
       return "Aucun événement trouvé dans l'agenda pour cette période.";
     }
 
     let eventsText = "Agenda existant (pour vérifier conflits) :\n";
-    data.items.forEach((event: any) => {
+    data.items.forEach((event: { start: { dateTime?: string }; summary?: string; location?: string }) => {
        const start = event.start.dateTime ? new Date(event.start.dateTime).toLocaleString([], {weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'}) : 'Journée entière';
-       eventsText += `- ${start} : ${event.summary} ${event.location ? `(${event.location})` : ''}\n`;
+       eventsText += `- ${start} : ${event.summary || '(Sans titre)'} ${event.location ? `(${event.location})` : ''}\n`;
     });
 
     return eventsText;
 
   } catch (error) {
     console.error("Error fetching Calendar:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
     return "Impossible de récupérer l'agenda.";
   }
 };
