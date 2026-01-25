@@ -1,15 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FamilyContext, ServiceIntegration, Child } from '../../types';
 import { Button } from '../ui/Button';
-import { Users, Mail, CheckCircle2, Plus, X, Baby, ArrowRight, Loader2, Info, Copy, Calendar, AlertCircle } from 'lucide-react';
+import { Users, Mail, CheckCircle2, Plus, X, Baby, ArrowRight, Loader2, Info, Copy, Calendar, AlertCircle, Tag } from 'lucide-react';
 import { initGoogleAuth, signInWithGoogle, isGoogleAuthReady, getErrorMessage } from '../../services/google';
+import {
+  createFamily,
+  addFamilyMember,
+  addChild as addChildToDb,
+  isSupabaseConfigured
+} from '../../services/supabase';
 
 interface OnboardingWizardProps {
-  onComplete: (data: { family: FamilyContext; services: ServiceIntegration[] }) => void;
+  userId?: string;
+  onComplete: (data: { family: FamilyContext; services: ServiceIntegration[]; familyId?: string }) => void;
 }
 
-export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
+export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ userId, onComplete }) => {
   const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
 
   // STEP 1 STATE: Family
   const [family, setFamily] = useState<FamilyContext>({
@@ -28,6 +36,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   const [currentOrigin, setCurrentOrigin] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [isGoogleReady, setIsGoogleReady] = useState(false);
+
+  // Activity input state
+  const [newActivity, setNewActivity] = useState<Record<string, string>>({});
 
   // Handle successful Google auth
   const handleGoogleSuccess = useCallback((token: string) => {
@@ -86,21 +97,44 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
       id: Math.random().toString(36).substr(2, 9),
       name: '',
       schoolName: '',
+      activities: [],
       color: 'bg-alto-sage/30 text-alto-navy'
     };
     setFamily({...family, children: [...family.children, newChild]});
   };
 
-  const updateChild = (id: string, field: keyof Child, value: string) => {
+  const updateChild = (id: string, field: keyof Child, value: string | string[]) => {
     setFamily({
       ...family,
       children: family.children.map(c => c.id === id ? { ...c, [field]: value } : c)
     });
   };
 
+  const removeChild = (id: string) => {
+    setFamily({...family, children: family.children.filter(c => c.id !== id)});
+  };
+
+  const addActivityToChild = (childId: string) => {
+    const activity = newActivity[childId]?.trim();
+    if (!activity) return;
+
+    const child = family.children.find(c => c.id === childId);
+    if (child && !child.activities.includes(activity)) {
+      updateChild(childId, 'activities', [...child.activities, activity]);
+    }
+    setNewActivity(prev => ({ ...prev, [childId]: '' }));
+  };
+
+  const removeActivityFromChild = (childId: string, activity: string) => {
+    const child = family.children.find(c => c.id === childId);
+    if (child) {
+      updateChild(childId, 'activities', child.activities.filter(a => a !== activity));
+    }
+  };
+
   const forceSimulationMode = () => {
     setIsAuthenticating(false);
-    setServices(prev => prev.map(s => 
+    setServices(prev => prev.map(s =>
       (s.id === 'gmail' || s.id === 'gcal') ? { ...s, connected: true } : s
     ));
   };
@@ -138,16 +172,53 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     }
   };
 
-  const handleFinish = () => {
-    setStep(3); // Show success briefly
-    setTimeout(() => {
-      onComplete({ family, services });
-    }, 1500);
+  const handleFinish = async () => {
+    setSaving(true);
+
+    // Save to Supabase if configured
+    if (isSupabaseConfigured() && userId) {
+      try {
+        // Create family
+        const familyData = await createFamily('Ma Famille', userId);
+
+        // Add current user as owner
+        await addFamilyMember(familyData.id, userId, 'owner');
+
+        // Add children
+        for (const child of family.children) {
+          await addChildToDb(familyData.id, {
+            name: child.name,
+            birth_date: child.birthDate,
+            school_name: child.schoolName,
+            activities: child.activities,
+            color: child.color
+          });
+        }
+
+        setStep(3);
+        setTimeout(() => {
+          onComplete({ family, services, familyId: familyData.id });
+        }, 1500);
+      } catch (error) {
+        console.error('Error saving to Supabase:', error);
+        // Continue in demo mode
+        setStep(3);
+        setTimeout(() => {
+          onComplete({ family, services });
+        }, 1500);
+      }
+    } else {
+      // Demo mode
+      setStep(3);
+      setTimeout(() => {
+        onComplete({ family, services });
+      }, 1500);
+    }
   };
 
   const copyOrigin = () => {
     navigator.clipboard.writeText(currentOrigin);
-    alert("URL copiée ! Ajoutez-la dans 'Authorized JavaScript origins' sur Google Cloud.");
+    alert("URL copiee ! Ajoutez-la dans 'Authorized JavaScript origins' sur Google Cloud.");
   };
 
   const googleConnected = services.some(s => s.id === 'gmail' && s.connected);
@@ -155,17 +226,17 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   return (
     <div className="min-h-screen bg-alto-cream flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-3xl bg-white rounded-[2.5rem] shadow-xl overflow-hidden min-h-[600px] flex flex-col relative">
-        
+
         {/* Progress Bar */}
         <div className="h-2 bg-gray-100 w-full">
-          <div 
+          <div
             className="h-full bg-alto-sage transition-all duration-500 ease-out"
             style={{ width: `${(step / 3) * 100}%` }}
           />
         </div>
 
         <div className="flex-1 p-8 md:p-12 flex flex-col">
-          
+
           {/* STEP 1: FAMILY SETUP */}
           {step === 1 && (
             <div className="flex-1 flex flex-col animate-fade-in">
@@ -174,7 +245,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   <Users size={32} />
                 </div>
                 <h2 className="text-3xl font-display font-bold text-alto-navy mb-2">Qui compose votre tribu ?</h2>
-                <p className="text-gray-500">Alto a besoin de connaître les prénoms pour trier les infos.</p>
+                <p className="text-gray-500">Alto a besoin de connaitre les prenoms pour trier les infos.</p>
               </div>
 
               <div className="flex-1 overflow-y-auto max-h-[400px] space-y-6 px-4">
@@ -197,41 +268,96 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   <label className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Les Enfants</label>
                   <div className="space-y-3">
                     {family.children.map((child, idx) => (
-                      <div key={child.id} className="flex gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm items-start relative group">
-                         <button 
-                            onClick={() => setFamily({...family, children: family.children.filter(c => c.id !== child.id)})}
+                      <div key={child.id} className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm relative group">
+                         <button
+                            onClick={() => removeChild(child.id)}
                             className="absolute -top-2 -right-2 bg-white rounded-full p-1 text-gray-300 hover:text-red-500 shadow-sm border border-gray-100"
                          >
                            <X size={14} />
                          </button>
-                         <div className="w-10 h-10 rounded-full bg-alto-cream flex items-center justify-center text-alto-terra shrink-0">
-                           <Baby size={20} />
-                         </div>
-                         <div className="flex-1 space-y-3">
-                           <div>
-                             <label className="text-[10px] text-gray-400 uppercase font-bold">Prénom</label>
-                             <input 
-                               autoFocus={idx === family.children.length - 1}
-                               className="w-full font-bold text-alto-navy border-b border-gray-200 focus:border-alto-sage outline-none bg-transparent py-1"
-                               placeholder="Ex: Léo"
-                               value={child.name}
-                               onChange={(e) => updateChild(child.id, 'name', e.target.value)}
-                             />
+                         <div className="flex items-start gap-4">
+                           <div className="w-10 h-10 rounded-full bg-alto-cream flex items-center justify-center text-alto-terra shrink-0">
+                             <Baby size={20} />
                            </div>
-                           <div>
-                             <label className="text-[10px] text-gray-400 uppercase font-bold">École / Classe</label>
-                             <input 
-                               className="w-full text-sm text-gray-600 border-b border-gray-200 focus:border-alto-sage outline-none bg-transparent py-1"
-                               placeholder="Ex: École Jules Ferry"
-                               value={child.schoolName}
-                               onChange={(e) => updateChild(child.id, 'schoolName', e.target.value)}
-                             />
+                           <div className="flex-1 space-y-3">
+                             {/* Name */}
+                             <div>
+                               <label className="text-[10px] text-gray-400 uppercase font-bold">Prenom</label>
+                               <input
+                                 autoFocus={idx === family.children.length - 1}
+                                 className="w-full font-bold text-alto-navy border-b border-gray-200 focus:border-alto-sage outline-none bg-transparent py-1"
+                                 placeholder="Ex: Leo"
+                                 value={child.name}
+                                 onChange={(e) => updateChild(child.id, 'name', e.target.value)}
+                               />
+                             </div>
+
+                             {/* Birth Date */}
+                             <div>
+                               <label className="text-[10px] text-gray-400 uppercase font-bold">Date de naissance</label>
+                               <input
+                                 type="date"
+                                 className="w-full text-sm text-gray-600 border-b border-gray-200 focus:border-alto-sage outline-none bg-transparent py-1"
+                                 value={child.birthDate || ''}
+                                 onChange={(e) => updateChild(child.id, 'birthDate', e.target.value)}
+                               />
+                             </div>
+
+                             {/* School */}
+                             <div>
+                               <label className="text-[10px] text-gray-400 uppercase font-bold">Ecole / Classe</label>
+                               <input
+                                 className="w-full text-sm text-gray-600 border-b border-gray-200 focus:border-alto-sage outline-none bg-transparent py-1"
+                                 placeholder="Ex: Ecole Jules Ferry"
+                                 value={child.schoolName}
+                                 onChange={(e) => updateChild(child.id, 'schoolName', e.target.value)}
+                               />
+                             </div>
+
+                             {/* Activities */}
+                             <div>
+                               <label className="text-[10px] text-gray-400 uppercase font-bold flex items-center gap-1">
+                                 <Tag size={10} /> Activites extra-scolaires
+                               </label>
+                               <div className="flex flex-wrap gap-1 mt-2 mb-2">
+                                 {child.activities.map((activity, actIdx) => (
+                                   <span
+                                     key={actIdx}
+                                     className="inline-flex items-center gap-1 px-2 py-0.5 bg-alto-cream text-alto-navy text-xs font-medium rounded-full"
+                                   >
+                                     {activity}
+                                     <button
+                                       onClick={() => removeActivityFromChild(child.id, activity)}
+                                       className="text-gray-400 hover:text-red-500"
+                                     >
+                                       <X size={12} />
+                                     </button>
+                                   </span>
+                                 ))}
+                               </div>
+                               <div className="flex items-center gap-2">
+                                 <input
+                                   type="text"
+                                   value={newActivity[child.id] || ''}
+                                   onChange={(e) => setNewActivity(prev => ({ ...prev, [child.id]: e.target.value }))}
+                                   onKeyDown={(e) => e.key === 'Enter' && addActivityToChild(child.id)}
+                                   placeholder="Ex: Football, Piano..."
+                                   className="flex-1 text-sm text-gray-600 border-b border-gray-200 focus:border-alto-sage outline-none bg-transparent py-1"
+                                 />
+                                 <button
+                                   onClick={() => addActivityToChild(child.id)}
+                                   className="text-alto-sage hover:text-alto-navy"
+                                 >
+                                   <Plus size={16} />
+                                 </button>
+                               </div>
+                             </div>
                            </div>
                          </div>
                       </div>
                     ))}
-                    
-                    <button 
+
+                    <button
                       onClick={addChild}
                       className="w-full py-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 font-bold hover:border-alto-sage hover:text-alto-sage hover:bg-alto-sage/5 transition-all flex items-center justify-center gap-2"
                     >
@@ -259,7 +385,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 <h2 className="text-3xl font-display font-bold text-alto-navy mb-2">Une seule connexion</h2>
                 <p className="text-gray-500">Pour le MVP, connectez simplement votre compte Google pour tout analyser.</p>
               </div>
-              
+
               {/* OAuth Helper Box */}
               <div className="mx-auto max-w-2xl w-full bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-xs text-blue-800 shadow-sm">
                 <div className="flex items-start gap-3">
@@ -268,21 +394,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                      <p className="mb-2">
                        <strong>Configuration Requise :</strong> Ajoutez cette URL dans <em>"Authorized JavaScript origins"</em> sur votre console Google Cloud.
                      </p>
-                     
+
                      <div className="flex items-center gap-2">
                         <div className="relative flex-1">
-                          <input 
+                          <input
                             readOnly
                             value={currentOrigin}
                             className="w-full bg-white border border-blue-200 rounded-lg py-2 pl-3 pr-3 font-mono text-[11px] text-gray-600 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 shadow-inner"
                             onClick={(e) => e.currentTarget.select()}
                           />
                         </div>
-                        <button 
-                          onClick={copyOrigin} 
+                        <button
+                          onClick={copyOrigin}
                           className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors font-bold whitespace-nowrap shadow-sm"
                         >
-                          <Copy size={14} /> 
+                          <Copy size={14} />
                           <span className="hidden sm:inline">Copier</span>
                         </button>
                      </div>
@@ -307,8 +433,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   <div
                     onClick={() => !isAuthenticating && handleConnectGoogle()}
                     className={`relative p-8 rounded-3xl border-2 cursor-pointer transition-all duration-300 flex flex-col items-center text-center gap-6 group hover:shadow-lg ${
-                      googleConnected 
-                        ? 'border-alto-sage bg-alto-sage/10' 
+                      googleConnected
+                        ? 'border-alto-sage bg-alto-sage/10'
                         : 'border-gray-200 bg-white hover:border-blue-300'
                     } ${isAuthenticating ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
@@ -316,15 +442,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     {isAuthenticating && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/80 backdrop-blur-sm rounded-3xl text-center p-4">
                          <Loader2 className="animate-spin text-alto-navy w-10 h-10 mb-3" />
-                         <span className="text-sm font-bold text-alto-navy">Connexion sécurisée à Google...</span>
-                         <button 
+                         <span className="text-sm font-bold text-alto-navy">Connexion securisee a Google...</span>
+                         <button
                            onClick={(e) => {
                              e.stopPropagation();
                              forceSimulationMode();
                            }}
                            className="mt-4 text-xs underline text-gray-500 hover:text-red-500"
                          >
-                           Bloqué ? Forcer le mode démo
+                           Bloque ? Forcer le mode demo
                          </button>
                       </div>
                     )}
@@ -338,7 +464,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                         <Calendar size={32} />
                       </div>
                     </div>
-                    
+
                     <div>
                       <div className="font-display font-bold text-xl text-alto-navy mb-1">
                         Google Workspace
@@ -351,17 +477,24 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     <div className={`px-6 py-2 rounded-full font-bold text-sm transition-all ${
                       googleConnected ? 'bg-alto-sage text-alto-navy' : 'bg-gray-100 text-gray-500 group-hover:bg-blue-600 group-hover:text-white'
                     }`}>
-                      {googleConnected ? 'Connecté ✓' : 'Connecter mon compte'}
+                      {googleConnected ? 'Connecte' : 'Connecter mon compte'}
                     </div>
                   </div>
               </div>
-              
+
               <div className="mt-auto pt-8 flex justify-between items-center">
                 <button onClick={() => setStep(1)} className="text-gray-400 font-bold hover:text-alto-navy transition-colors" disabled={isAuthenticating}>
                   Retour
                 </button>
-                <Button onClick={handleFinish} disabled={!googleConnected || isAuthenticating}>
-                  Terminer l'installation
+                <Button onClick={handleFinish} disabled={!googleConnected || isAuthenticating || saving}>
+                  {saving ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin mr-2" />
+                      Sauvegarde...
+                    </>
+                  ) : (
+                    "Terminer l'installation"
+                  )}
                 </Button>
               </div>
             </div>
@@ -373,9 +506,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
               <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce-slow">
                 <CheckCircle2 size={48} className="text-green-600" />
               </div>
-              <h2 className="text-3xl font-display font-bold text-alto-navy mb-4">Tout est prêt !</h2>
+              <h2 className="text-3xl font-display font-bold text-alto-navy mb-4">Tout est pret !</h2>
               <p className="text-lg text-gray-600 max-w-md">
-                Alto commence l'analyse de vos données. Redirection vers votre tableau de bord...
+                Alto commence l'analyse de vos donnees. Redirection vers votre tableau de bord...
               </p>
             </div>
           )}

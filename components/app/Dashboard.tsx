@@ -13,12 +13,16 @@ interface DashboardProps {
   onLogout: () => void;
   initialContext?: FamilyContext;
   initialIntegrations?: ServiceIntegration[];
+  familyId?: string | null;
+  userId?: string;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ 
-  onLogout, 
-  initialContext, 
-  initialIntegrations 
+export const Dashboard: React.FC<DashboardProps> = ({
+  onLogout,
+  initialContext,
+  initialIntegrations,
+  familyId,
+  userId
 }) => {
   // Use provided initial context or fallback to demo data
   const [familyContext, setFamilyContext] = useState<FamilyContext>(initialContext || {
@@ -26,8 +30,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       { id: 'p1', name: 'Moi', isCurrentUser: true }
     ],
     children: [
-      { id: 'c1', name: 'Léo', schoolName: 'École Jules Ferry', color: 'bg-blue-100 text-blue-700' },
-      { id: 'c2', name: 'Emma', schoolName: 'Crèche Les Petits Pas', color: 'bg-pink-100 text-pink-700' }
+      { id: 'c1', name: 'Léo', schoolName: 'École Jules Ferry', activities: ['Football', 'Piano'], color: 'bg-blue-100 text-blue-700' },
+      { id: 'c2', name: 'Emma', schoolName: 'Crèche Les Petits Pas', activities: [], color: 'bg-pink-100 text-pink-700' }
     ],
     trustedSenders: [],
     learnedKeywords: []
@@ -153,7 +157,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Sidebar: Integrations & Family */}
         <div className="lg:col-span-3 flex flex-col gap-6">
-          <FamilySettings context={familyContext} onUpdate={setFamilyContext} />
+          <FamilySettings context={familyContext} onUpdate={setFamilyContext} familyId={familyId} userId={userId} />
           <Integrations 
             services={integrations} 
             onToggle={handleToggleIntegration} 
