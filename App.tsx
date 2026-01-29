@@ -7,6 +7,7 @@ import { Benefits } from './components/Benefits';
 import { HowItWorks } from './components/HowItWorks';
 import { Testimonials } from './components/Testimonials';
 import { CTA } from './components/CTA';
+import { FloatingCTA } from './components/FloatingCTA';
 import { Footer } from './components/Footer';
 import { Dashboard } from './components/app/Dashboard';
 import { AuthPage } from './components/auth/AuthPage';
@@ -247,6 +248,10 @@ const App: React.FC = () => {
     );
   }
 
+  // Hero → CTA prefill state
+  const [heroPrefill, setHeroPrefill] = useState<{ firstName: string; email: string } | null>(null);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+
   // 5. LANDING VIEW
   return (
     <div className="min-h-screen bg-alto-cream font-sans selection:bg-alto-sage selection:text-white">
@@ -255,14 +260,19 @@ const App: React.FC = () => {
         onEnterBeta={() => setView('auth')}
       />
       <main className="overflow-x-hidden">
-        <Hero />
+        <Hero onHeroSubmit={(firstName, email) => setHeroPrefill({ firstName, email })} />
         <Problem />
         <Solution />
         <Benefits />
         <HowItWorks />
         <Testimonials />
-        <CTA />
+        <CTA
+          prefillFirstName={heroPrefill?.firstName}
+          prefillEmail={heroPrefill?.email}
+          onSuccess={() => setWaitlistSuccess(true)}
+        />
       </main>
+      <FloatingCTA hidden={waitlistSuccess} />
       <Footer />
     </div>
   );
