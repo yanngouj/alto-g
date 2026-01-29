@@ -37,6 +37,10 @@ const App: React.FC = () => {
   const [userContext, setUserContext] = useState<FamilyContext | undefined>(undefined);
   const [userServices, setUserServices] = useState<ServiceIntegration[] | undefined>(undefined);
 
+  // Hero → CTA prefill state
+  const [heroPrefill, setHeroPrefill] = useState<{ firstName: string; email: string } | null>(null);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+
   // Check for invite token in URL and initialize auth
   useEffect(() => {
     // Check URL for invitation token
@@ -247,10 +251,6 @@ const App: React.FC = () => {
       />
     );
   }
-
-  // Hero → CTA prefill state
-  const [heroPrefill, setHeroPrefill] = useState<{ firstName: string; email: string } | null>(null);
-  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
 
   // 5. LANDING VIEW
   return (
