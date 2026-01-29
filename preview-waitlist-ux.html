@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alto — Waitlist UX Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #F9F7F2;
+      --navy: #1B3B6F;
+      --navy-light: #2C5282;
+      --sage: #9EB89E;
+      --sage-light: #C8DBC8;
+      --terra: #E07A5F;
+      --sand: #EFEBE0;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Rubik', sans-serif;
+      background: var(--cream);
+      color: var(--navy);
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Nunito', sans-serif; }
+
+    /* ─── Navbar ─── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(249,247,242,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(27,59,111,0.08);
+      padding: 14px 0;
+      transition: box-shadow 0.3s;
+    }
+    .navbar.scrolled { box-shadow: 0 2px 20px rgba(27,59,111,0.08); }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 22px;
+      color: var(--navy); text-decoration: none;
+    }
+    .logo-icon {
+      width: 38px; height: 38px; background: var(--navy); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 18px;
+    }
+    .nav-cta {
+      background: var(--navy); color: white; border: none; border-radius: 999px;
+      padding: 10px 24px; font-weight: 600; font-size: 14px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-cta:hover { background: var(--navy-light); transform: translateY(-1px); }
+
+    /* ─── Hero Section ─── */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 120px 24px 80px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -120px; right: -200px;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(158,184,158,0.2), transparent 70%);
+      animation: float 8s ease-in-out infinite;
+    }
+    .hero::after {
+      content: ''; position: absolute; bottom: -80px; left: -150px;
+      width: 500px; height: 500px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(224,122,95,0.1), transparent 70%);
+      animation: float 10s ease-in-out infinite reverse;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-30px); }
+    }
+    .hero-content {
+      max-width: 720px; text-align: center; position: relative; z-index: 2;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.2;
+      margin-bottom: 20px; font-weight: 800;
+    }
+    .hero h1 span { color: var(--terra); }
+    .hero p {
+      font-size: 1.15rem; color: #4a5568; line-height: 1.7; margin-bottom: 32px;
+      max-width: 560px; margin-left: auto; margin-right: auto;
+    }
+
+    /* ─── NEW: Inline Hero Form ─── */
+    .hero-form {
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .hero-form input {
+      padding: 14px 20px; border: 2px solid rgba(27,59,111,0.12);
+      border-radius: 14px; font-size: 15px; font-family: 'Rubik', sans-serif;
+      background: white; outline: none; transition: all 0.25s;
+      width: 200px;
+    }
+    .hero-form input:focus {
+      border-color: var(--sage);
+      box-shadow: 0 0 0 4px rgba(158,184,158,0.15);
+    }
+    .hero-form button {
+      padding: 14px 28px; background: var(--terra); color: white; border: none;
+      border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
+      font-family: 'Nunito', sans-serif; transition: all 0.25s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hero-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(224,122,95,0.3);
+    }
+    .hero-social-proof {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-top: 16px; font-size: 14px; color: #718096;
+    }
+    .avatars { display: flex; margin-right: 4px; }
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%; border: 2px solid white;
+      margin-right: -8px; font-size: 11px; display: flex; align-items: center;
+      justify-content: center; font-weight: 600; color: white;
+    }
+    .hero-or {
+      color: #a0aec0; font-size: 13px; margin: 24px 0 4px;
+    }
+    .hero-link {
+      color: var(--navy); font-weight: 600; font-size: 14px;
+      text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+    }
+
+    /* ─── Divider ─── */
+    .section-divider {
+      text-align: center; padding: 40px 24px 0; color: #a0aec0; font-size: 13px;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    /* ─── CTA / Waitlist Form Section ─── */
+    .cta-section {
+      padding: 80px 24px 100px; position: relative;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent, rgba(27,59,111,0.03), transparent);
+      pointer-events: none;
+    }
+    .cta-inner {
+      max-width: 640px; margin: 0 auto; position: relative; z-index: 2;
+    }
+    .cta-section h2 {
+      text-align: center; font-size: 2rem; font-weight: 800; margin-bottom: 8px;
+    }
+    .cta-subtitle {
+      text-align: center; color: #718096; font-size: 15px; margin-bottom: 40px;
+    }
+
+    /* ─── NEW: Progress Stepper ─── */
+    .stepper {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; margin-bottom: 36px; padding: 0 20px;
+    }
+    .step-item {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      position: relative; z-index: 2; min-width: 80px;
+    }
+    .step-dot {
+      width: 36px; height: 36px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-weight: 700;
+      font-size: 14px; transition: all 0.4s ease;
+      border: 2px solid #d1d5db; color: #a0aec0; background: white;
+    }
+    .step-dot.active {
+      border-color: var(--navy); background: var(--navy); color: white;
+      box-shadow: 0 0 0 4px rgba(27,59,111,0.12);
+    }
+    .step-dot.done {
+      border-color: var(--sage); background: var(--sage); color: white;
+    }
+    .step-label {
+      font-size: 11px; color: #a0aec0; font-weight: 500;
+      transition: color 0.3s; white-space: nowrap;
+    }
+    .step-label.active { color: var(--navy); font-weight: 700; }
+    .step-label.done { color: var(--sage); }
+    .step-line {
+      flex: 1; height: 2px; background: #e2e8f0; min-width: 40px;
+      margin: 0 -4px; margin-bottom: 22px; transition: background 0.4s;
+    }
+    .step-line.done { background: var(--sage); }
+
+    /* ─── Form Card ─── */
+    .form-card {
+      background: white; border-radius: 28px; padding: 40px;
+      box-shadow: 0 8px 40px rgba(27,59,111,0.06);
+      border: 1px solid rgba(27,59,111,0.06);
+      position: relative; overflow: hidden;
+    }
+
+    /* ─── Step Animations ─── */
+    .step-content {
+      animation: slideIn 0.4s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(-30px); }
+    }
+
+    /* ─── Form Elements ─── */
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block; font-size: 13px; font-weight: 600; color: var(--navy);
+      margin-bottom: 8px; letter-spacing: 0.3px;
+    }
+    .form-input {
+      width: 100%; padding: 14px 16px; border: 2px solid rgba(27,59,111,0.1);
+      border-radius: 14px; font-size: 15px; font-family: 'Rubik', sans-serif;
+      background: var(--cream); outline: none; transition: all 0.25s;
+      color: var(--navy);
+    }
+    .form-input::placeholder { color: #b0b8c4; }
+    .form-input:focus {
+      border-color: var(--sage); background: white;
+      box-shadow: 0 0 0 4px rgba(158,184,158,0.12);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ─── Toggle Buttons (hasChildren) ─── */
+    .toggle-group { display: flex; gap: 10px; }
+    .toggle-btn {
+      flex: 1; padding: 14px; border: 2px solid rgba(27,59,111,0.1);
+      border-radius: 14px; background: var(--cream); cursor: pointer;
+      text-align: center; font-weight: 600; font-size: 14px;
+      transition: all 0.25s; color: var(--navy);
+    }
+    .toggle-btn:hover { border-color: rgba(27,59,111,0.2); }
+    .toggle-btn.selected {
+      border-color: var(--navy); background: var(--navy); color: white;
+    }
+
+    /* ─── Chip Selectors ─── */
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip {
+      padding: 10px 18px; border: 2px solid rgba(27,59,111,0.1);
+      border-radius: 999px; background: var(--cream); cursor: pointer;
+      font-size: 13px; font-weight: 500; transition: all 0.25s;
+      color: var(--navy); user-select: none;
+    }
+    .chip:hover {
+      border-color: rgba(27,59,111,0.25); transform: translateY(-1px);
+    }
+    .chip.selected {
+      border-color: var(--sage); background: var(--sage-light); color: var(--navy);
+      font-weight: 600;
+    }
+    .chip.selected::before {
+      content: '\2713\00a0'; font-weight: 700;
+    }
+
+    /* ─── Emoji Cards ─── */
+    .emoji-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .emoji-card {
+      padding: 14px 8px; border: 2px solid rgba(27,59,111,0.08);
+      border-radius: 16px; background: white; cursor: pointer;
+      text-align: center; transition: all 0.25s;
+    }
+    .emoji-card:hover {
+      border-color: rgba(27,59,111,0.2); transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .emoji-card.selected {
+      border-color: var(--terra); background: rgba(224,122,95,0.06);
+    }
+    .emoji-card .emoji { font-size: 28px; margin-bottom: 6px; }
+    .emoji-card .emoji-label { font-size: 11px; color: #718096; font-weight: 500; }
+
+    /* ─── Buttons ─── */
+    .btn-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 28px; gap: 12px;
+    }
+    .btn-primary {
+      padding: 14px 32px; background: var(--navy); color: white; border: none;
+      border-radius: 999px; font-size: 15px; font-weight: 700; cursor: pointer;
+      font-family: 'Nunito', sans-serif; transition: all 0.25s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover {
+      background: var(--navy-light); transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(27,59,111,0.2);
+    }
+    .btn-secondary {
+      padding: 14px 24px; background: transparent; color: var(--navy); border: none;
+      border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: 'Rubik', sans-serif; transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(27,59,111,0.04); }
+    .btn-skip {
+      display: block; margin: 16px auto 0; padding: 8px 16px;
+      background: none; border: none; color: #a0aec0; font-size: 13px;
+      cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+      font-family: 'Rubik', sans-serif; transition: color 0.2s;
+    }
+    .btn-skip:hover { color: #718096; }
+
+    /* ─── Step Section Labels ─── */
+    .step-section-title {
+      font-size: 18px; font-weight: 700; margin-bottom: 6px;
+      font-family: 'Nunito', sans-serif;
+    }
+    .step-section-subtitle {
+      font-size: 13px; color: #718096; margin-bottom: 24px;
+    }
+
+    /* ─── Success Page ─── */
+    .success-content { text-align: center; }
+
+    .confetti-wrapper {
+      position: relative; display: inline-block; margin-bottom: 16px;
+    }
+    .success-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--sage), var(--sage-light));
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto; animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .success-icon svg { width: 36px; height: 36px; color: white; }
+
+    /* Confetti particles */
+    .confetti {
+      position: absolute; width: 8px; height: 8px; border-radius: 2px;
+      animation: confettiFall 1.2s ease-out forwards;
+      opacity: 0;
+    }
+    @keyframes confettiFall {
+      0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(var(--r)) scale(0.5); }
+    }
+
+    .success-title {
+      font-size: 1.7rem; font-weight: 800; margin: 16px 0 6px;
+    }
+    .success-subtitle {
+      color: #718096; font-size: 15px; margin-bottom: 24px;
+    }
+    .queue-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(224,122,95,0.08); color: var(--terra);
+      padding: 10px 22px; border-radius: 999px; font-weight: 700;
+      font-size: 15px; margin-bottom: 28px;
+    }
+    .queue-badge .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--terra);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .email-confirm-card {
+      background: var(--cream); border-radius: 16px; padding: 18px 24px;
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 28px; text-align: left;
+    }
+    .email-confirm-card .icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: rgba(27,59,111,0.06); display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .email-confirm-card .text { font-size: 14px; color: #4a5568; }
+    .email-confirm-card .text strong { color: var(--navy); }
+
+    /* ─── Timeline ─── */
+    .timeline {
+      text-align: left; margin: 0 auto 28px; max-width: 340px;
+    }
+    .timeline-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding-bottom: 18px; position: relative;
+    }
+    .timeline-item:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 32px;
+      width: 2px; height: calc(100% - 32px); background: #e2e8f0;
+    }
+    .timeline-dot {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .timeline-dot.done { background: var(--sage-light); color: var(--sage); }
+    .timeline-dot.pending { background: #f1f5f9; color: #cbd5e0; }
+    .timeline-text {
+      padding-top: 5px; font-size: 14px; color: #4a5568;
+    }
+    .timeline-text.done { color: var(--navy); font-weight: 500; }
+
+    /* ─── Share Buttons ─── */
+    .share-section { margin-top: 8px; }
+    .share-label { font-size: 13px; color: #a0aec0; margin-bottom: 12px; }
+    .share-buttons { display: flex; gap: 10px; justify-content: center; }
+    .share-btn {
+      padding: 10px 20px; border: 2px solid rgba(27,59,111,0.08);
+      border-radius: 12px; background: white; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--navy);
+      transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+      font-family: 'Rubik', sans-serif;
+    }
+    .share-btn:hover {
+      border-color: rgba(27,59,111,0.15); transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+
+    /* ─── NEW: Floating CTA Bar ─── */
+    .floating-cta {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 99;
+      background: rgba(27,59,111,0.97); backdrop-filter: blur(12px);
+      padding: 14px 24px; transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .floating-cta.visible { transform: translateY(0); }
+    .floating-inner {
+      max-width: 700px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+    }
+    .floating-text {
+      color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 500;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .floating-text .live-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #68d391;
+      animation: pulse 1.5s infinite;
+    }
+    .floating-btn {
+      padding: 10px 24px; background: var(--terra); color: white; border: none;
+      border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer;
+      font-family: 'Nunito', sans-serif; transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .floating-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(224,122,95,0.4);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 640px) {
+      .hero-form { flex-direction: column; align-items: stretch; }
+      .hero-form input { width: 100%; }
+      .form-row { grid-template-columns: 1fr; }
+      .emoji-cards { grid-template-columns: repeat(2, 1fr); }
+      .form-card { padding: 28px 20px; border-radius: 22px; }
+      .btn-row { flex-direction: column-reverse; }
+      .btn-row .btn-secondary { align-self: center; }
+      .btn-row .btn-primary { width: 100%; justify-content: center; }
+      .share-buttons { flex-direction: column; }
+      .floating-inner { flex-direction: column; gap: 10px; text-align: center; }
+      .stepper { gap: 0; padding: 0; }
+      .step-label { font-size: 10px; }
+      .step-line { min-width: 24px; }
+    }
+
+    /* ─── Preview Banner ─── */
+    .preview-banner {
+      background: linear-gradient(135deg, var(--terra), #e8956f);
+      color: white; text-align: center; padding: 12px 24px;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    }
+    .navbar { top: 40px; }
+    .hero { padding-top: 160px; }
+  </style>
+</head>
+<body>
+
+<!-- Preview Banner -->
+<div class="preview-banner">
+  PREVIEW MOCKUP — Enhanced Waitlist UX
+</div>
+
+<!-- Navbar -->
+<nav class="navbar scrolled">
+  <div class="nav-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">A</div>
+      Alto
+    </a>
+    <button class="nav-cta" onclick="scrollToForm()">Rejoindre la liste d'attente</button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════ -->
+<!--  HERO SECTION — with inline email capture   -->
+<!-- ════════════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <h1>Et si l'IA allegeait enfin<br><span>la charge mentale familiale</span> ?</h1>
+    <p>
+      Alto lit vos emails d'ecole, met a jour l'agenda familial et envoie un briefing WhatsApp chaque matin. Zero effort. Tout est gere.
+    </p>
+
+    <!-- NEW: Inline quick-signup form -->
+    <div class="hero-form" id="heroForm">
+      <input type="text" placeholder="Votre prenom" id="heroName" />
+      <input type="email" placeholder="Votre email" id="heroEmail" />
+      <button onclick="heroSubmit()">
+        Rejoindre
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+
+    <div class="hero-social-proof">
+      <div class="avatars">
+        <div class="avatar" style="background:#6b8cce;">S</div>
+        <div class="avatar" style="background:#e07a5f;">M</div>
+        <div class="avatar" style="background:#9eb89e;">L</div>
+        <div class="avatar" style="background:#d4a574;">A</div>
+      </div>
+      <span><strong>2,847</strong> familles deja inscrites</span>
+    </div>
+
+    <p class="hero-or">ou</p>
+    <a class="hero-link" onclick="scrollToForm()">Repondre au questionnaire complet (30s)</a>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════ -->
+<!--  CTA SECTION — Enhanced Multi-step Form     -->
+<!-- ════════════════════════════════════════════ -->
+<section class="cta-section" id="waitlist-form">
+  <div class="cta-inner">
+    <h2>Rejoindre la liste d'attente</h2>
+    <p class="cta-subtitle">Aidez-nous a construire Alto pour vous — 30 secondes</p>
+
+    <!-- NEW: Progress Stepper -->
+    <div class="stepper" id="stepper">
+      <div class="step-item">
+        <div class="step-dot active" id="dot-1">1</div>
+        <span class="step-label active" id="label-1">Vos infos</span>
+      </div>
+      <div class="step-line" id="line-1"></div>
+      <div class="step-item">
+        <div class="step-dot" id="dot-2">2</div>
+        <span class="step-label" id="label-2">Famille</span>
+      </div>
+      <div class="step-line" id="line-2"></div>
+      <div class="step-item">
+        <div class="step-dot" id="dot-3">3</div>
+        <span class="step-label" id="label-3">Preferences</span>
+      </div>
+      <div class="step-line" id="line-3"></div>
+      <div class="step-item">
+        <div class="step-dot" id="dot-4">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span class="step-label" id="label-4">Termine !</span>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+
+      <!-- ─── STEP 1: Contact Info ─── -->
+      <div id="step-1" class="step-content">
+        <div class="step-section-title">Vos informations</div>
+        <div class="step-section-subtitle">Pour vous recontacter quand votre place sera prete</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prenom *</label>
+            <input class="form-input" type="text" placeholder="ex: Marie" id="firstName" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input class="form-input" type="email" placeholder="marie@email.com" id="email" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Ville (optionnel)</label>
+            <input class="form-input" type="text" placeholder="ex: Paris" id="city" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Avez-vous des enfants ? *</label>
+            <div class="toggle-group">
+              <div class="toggle-btn" onclick="selectToggle(this, 'yes')">Oui</div>
+              <div class="toggle-btn" onclick="selectToggle(this, 'no')">Non</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="justify-content: flex-end;">
+          <button class="btn-primary" onclick="goToStep(2)">
+            Continuer
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ─── STEP 2: Family Context (was part of old Step 2) ─── -->
+      <div id="step-2" class="step-content" style="display:none;">
+        <div class="step-section-title">Votre famille</div>
+        <div class="step-section-subtitle">Pour personnaliser Alto selon votre situation</div>
+
+        <div class="form-group">
+          <label class="form-label">Situation familiale</label>
+          <div class="chips" id="familyType">
+            <div class="chip" onclick="selectChip(this, 'familyType')">Classique</div>
+            <div class="chip" onclick="selectChip(this, 'familyType')">Recomposee</div>
+            <div class="chip" onclick="selectChip(this, 'familyType')">Solo</div>
+            <div class="chip" onclick="selectChip(this, 'familyType')">Autre</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Niveaux scolaires de vos enfants</label>
+          <div class="chips" id="schoolLevels">
+            <div class="chip" onclick="toggleChip(this)">Maternelle</div>
+            <div class="chip" onclick="toggleChip(this)">CP - CE1</div>
+            <div class="chip" onclick="toggleChip(this)">CE2 - CM2</div>
+            <div class="chip" onclick="toggleChip(this)">College</div>
+            <div class="chip" onclick="toggleChip(this)">Lycee</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="goToStep(1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Retour
+          </button>
+          <button class="btn-primary" onclick="goToStep(3)">
+            Continuer
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+        <button class="btn-skip" onclick="goToStep(3)">Passer cette etape</button>
+      </div>
+
+      <!-- ─── STEP 3: Preferences (was part of old Step 2) ─── -->
+      <div id="step-3" class="step-content" style="display:none;">
+        <div class="step-section-title">Vos preferences</div>
+        <div class="step-section-subtitle">Pour vous proposer la meilleure experience</div>
+
+        <div class="form-group">
+          <label class="form-label">Principale difficulte au quotidien</label>
+          <div class="chips" id="painPoint">
+            <div class="chip" onclick="selectChip(this, 'painPoint')">Mails d'ecole</div>
+            <div class="chip" onclick="selectChip(this, 'painPoint')">Agenda famille</div>
+            <div class="chip" onclick="selectChip(this, 'painPoint')">Devoirs / Activites</div>
+            <div class="chip" onclick="selectChip(this, 'painPoint')">Coordination parents</div>
+            <div class="chip" onclick="selectChip(this, 'painPoint')">Nounou / Intervenants</div>
+            <div class="chip" onclick="selectChip(this, 'painPoint')">Administratif</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Comment gerez-vous actuellement ?</label>
+          <div class="emoji-cards" id="feeling">
+            <div class="emoji-card" onclick="selectEmojiCard(this)">
+              <div class="emoji">&#127744;</div>
+              <div class="emoji-label">Tres complique</div>
+            </div>
+            <div class="emoji-card" onclick="selectEmojiCard(this)">
+              <div class="emoji">&#128533;</div>
+              <div class="emoji-label">Parfois dur</div>
+            </div>
+            <div class="emoji-card" onclick="selectEmojiCard(this)">
+              <div class="emoji">&#128578;</div>
+              <div class="emoji-label">Gerable</div>
+            </div>
+            <div class="emoji-card" onclick="selectEmojiCard(this)">
+              <div class="emoji">&#128524;</div>
+              <div class="emoji-label">Simple</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Format souhaite</label>
+          <div class="chips" id="format">
+            <div class="chip" onclick="toggleChip(this)">WhatsApp</div>
+            <div class="chip" onclick="toggleChip(this)">App Mobile</div>
+            <div class="chip" onclick="toggleChip(this)">Web</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="goToStep(2)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Retour
+          </button>
+          <button class="btn-primary" onclick="goToStep(4)" style="background: var(--terra);">
+            Valider mon inscription
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
+        <button class="btn-skip" onclick="goToStep(4)">Passer et valider</button>
+      </div>
+
+      <!-- ─── STEP 4: Success ─── -->
+      <div id="step-4" class="step-content" style="display:none;">
+        <div class="success-content">
+
+          <!-- Confetti + Check icon -->
+          <div class="confetti-wrapper" id="confettiWrapper">
+            <div class="success-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+
+          <h2 class="success-title">Merci Marie !</h2>
+          <p class="success-subtitle">Vous etes sur la liste d'attente d'Alto.</p>
+
+          <!-- Queue position badge -->
+          <div class="queue-badge">
+            <span class="pulse-dot"></span>
+            Position #2,847
+          </div>
+
+          <!-- Email confirmation card -->
+          <div class="email-confirm-card">
+            <div class="icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B3B6F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div class="text">
+              Un email de confirmation a ete envoye a<br><strong>marie@email.com</strong>
+            </div>
+          </div>
+
+          <!-- Next steps timeline -->
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot done">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="timeline-text done">Email de bienvenue envoye</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot pending">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="timeline-text">Acces anticipe dans les prochaines semaines</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot pending">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </div>
+              <div class="timeline-text">Notification quand votre place est prete</div>
+            </div>
+          </div>
+
+          <!-- Share section -->
+          <div class="share-section">
+            <p class="share-label">Partagez avec d'autres familles</p>
+            <div class="share-buttons">
+              <button class="share-btn" onclick="alert('Share via WhatsApp')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.553 4.106 1.519 5.834L.053 23.52l5.812-1.523A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.82c-1.93 0-3.77-.522-5.39-1.49l-.386-.229-4.005 1.05 1.069-3.903-.251-.399A9.796 9.796 0 012.18 12c0-5.422 4.398-9.82 9.82-9.82 5.422 0 9.82 4.398 9.82 9.82 0 5.422-4.398 9.82-9.82 9.82z"/></svg>
+                WhatsApp
+              </button>
+              <button class="share-btn" onclick="alert('Share on X/Twitter')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                Twitter / X
+              </button>
+              <button class="share-btn" onclick="copyLink()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copier le lien
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- NEW: Floating CTA Bar -->
+<div class="floating-cta" id="floatingCta">
+  <div class="floating-inner">
+    <div class="floating-text">
+      <span class="live-dot"></span>
+      <span>Rejoignez <strong>2,847 familles</strong> sur la liste d'attente</span>
+    </div>
+    <button class="floating-btn" onclick="scrollToForm()">S'inscrire maintenant</button>
+  </div>
+</div>
+
+<div style="height: 200px;"></div>
+
+<script>
+  let currentStep = 1;
+  let hasChildren = null;
+
+  // ── Toggle (Oui/Non) ──
+  function selectToggle(el, value) {
+    el.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    hasChildren = value;
+  }
+
+  // ── Single-select chips ──
+  function selectChip(el, group) {
+    el.closest('.chips').querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // ── Multi-select chips ──
+  function toggleChip(el) {
+    el.classList.toggle('selected');
+  }
+
+  // ── Emoji cards ──
+  function selectEmojiCard(el) {
+    el.parentElement.querySelectorAll('.emoji-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // ── Step navigation ──
+  function goToStep(step) {
+    // Hide current
+    document.getElementById('step-' + currentStep).style.display = 'none';
+
+    currentStep = step;
+
+    // Show new step
+    const newStep = document.getElementById('step-' + step);
+    newStep.style.display = 'block';
+    newStep.style.animation = 'none';
+    newStep.offsetHeight; // trigger reflow
+    newStep.style.animation = 'slideIn 0.4s ease-out';
+
+    // Update stepper dots
+    updateStepper(step);
+
+    // Scroll to form
+    document.getElementById('waitlist-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Launch confetti on success step
+    if (step === 4) {
+      setTimeout(launchConfetti, 300);
+    }
+  }
+
+  function updateStepper(activeStep) {
+    for (let i = 1; i <= 4; i++) {
+      const dot = document.getElementById('dot-' + i);
+      const label = document.getElementById('label-' + i);
+      const line = document.getElementById('line-' + (i - 1));
+
+      dot.classList.remove('active', 'done');
+      label.classList.remove('active', 'done');
+
+      if (i < activeStep) {
+        dot.classList.add('done');
+        label.classList.add('done');
+        dot.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      } else if (i === activeStep) {
+        dot.classList.add('active');
+        label.classList.add('active');
+        if (i < 4) dot.textContent = i;
+      } else {
+        if (i < 4) dot.textContent = i;
+      }
+
+      if (line) {
+        line.classList.toggle('done', i < activeStep);
+      }
+    }
+  }
+
+  // ── Confetti ──
+  function launchConfetti() {
+    const wrapper = document.getElementById('confettiWrapper');
+    const colors = ['#E07A5F', '#1B3B6F', '#9EB89E', '#F4A261', '#C8DBC8', '#6b8cce'];
+
+    for (let i = 0; i < 24; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      const angle = (i / 24) * 360;
+      const distance = 60 + Math.random() * 80;
+      const tx = Math.cos(angle * Math.PI / 180) * distance;
+      const ty = Math.sin(angle * Math.PI / 180) * distance - 30;
+      confetti.style.cssText = `
+        position: absolute; top: 50%; left: 50%;
+        width: ${6 + Math.random() * 6}px;
+        height: ${6 + Math.random() * 6}px;
+        background: ${colors[i % colors.length]};
+        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+        --tx: ${tx}px; --ty: ${ty}px; --r: ${Math.random() * 720}deg;
+        animation: confettiFall ${0.8 + Math.random() * 0.6}s ease-out forwards;
+        animation-delay: ${Math.random() * 0.2}s;
+      `;
+      wrapper.appendChild(confetti);
+    }
+  }
+
+  // ── Hero quick submit ──
+  function heroSubmit() {
+    const name = document.getElementById('heroName').value;
+    const email = document.getElementById('heroEmail').value;
+    if (!name || !email) {
+      alert('Veuillez remplir votre prenom et email.');
+      return;
+    }
+    // Pre-fill the full form and scroll down
+    document.getElementById('firstName').value = name;
+    document.getElementById('email').value = email;
+    scrollToForm();
+  }
+
+  // ── Scroll helpers ──
+  function scrollToForm() {
+    document.getElementById('waitlist-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Floating CTA on scroll ──
+  const floatingCta = document.getElementById('floatingCta');
+  const hero = document.getElementById('hero');
+
+  window.addEventListener('scroll', () => {
+    const heroBottom = hero.getBoundingClientRect().bottom;
+    if (heroBottom < 0 && currentStep < 4) {
+      floatingCta.classList.add('visible');
+    } else {
+      floatingCta.classList.remove('visible');
+    }
+  });
+
+  // ── Copy link ──
+  function copyLink() {
+    const url = window.location.origin;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+    }
+    alert('Lien copie !');
+  }
+</script>
+
+</body>
+</html>
