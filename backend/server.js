@@ -7,7 +7,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const twilio = require('twilio');
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 // Supabase Client (using service key for backend operations)
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -154,7 +154,7 @@ app.post('/api/send-invite', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Alto <noreply@alto.app>',
+        from: 'Alto <onboarding@resend.dev>',
         to: [email],
         subject: 'Invitation a rejoindre votre famille sur Alto',
         html: `
@@ -369,7 +369,7 @@ app.post('/api/waitlist', waitlistRateLimiter, async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Alto <noreply@alto.app>',
+        from: 'Alto <onboarding@resend.dev>',
         to: [email],
         subject: `Bienvenue sur la liste d'attente Alto, ${firstName} !`,
         html: emailHtml
