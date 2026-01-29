@@ -7,7 +7,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const twilio = require('twilio');
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // Supabase Client (using service key for backend operations)
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
