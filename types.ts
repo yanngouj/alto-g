@@ -74,4 +74,5 @@ export interface ServiceIntegration {
   color: string;
   accessToken?: string; // For real Gmail connection
   phoneNumber?: string; // For WhatsApp connection
+  suggested?: boolean; // Pre-suggested from waitlist preferences
 }

@@ -234,6 +234,7 @@ const App: React.FC = () => {
     return (
       <OnboardingWizard
         userId={user?.id}
+        userEmail={user?.email}
         onComplete={(data) => {
           setUserContext(data.family);
           setUserServices(data.services);

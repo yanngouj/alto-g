@@ -7,17 +7,22 @@ import {
   createFamily,
   addFamilyMember,
   addChild as addChildToDb,
-  isSupabaseConfigured
+  isSupabaseConfigured,
+  getWaitlistEntryByEmail,
+  markWaitlistConverted,
+  WaitlistEntry
 } from '../../services/supabase';
 
 interface OnboardingWizardProps {
   userId?: string;
+  userEmail?: string;
   onComplete: (data: { family: FamilyContext; services: ServiceIntegration[]; familyId?: string }) => void;
 }
 
-export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ userId, onComplete }) => {
+export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ userId, userEmail, onComplete }) => {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [waitlistEntry, setWaitlistEntry] = useState<WaitlistEntry | null>(null);
 
   // STEP 1 STATE: Family
   const [family, setFamily] = useState<FamilyContext>({
@@ -31,6 +36,53 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ userId, onCo
     { id: 'gcal', name: 'Google Agenda', connected: false, type: 'calendar', color: 'bg-blue-50 text-blue-500' },
     { id: 'whatsapp', name: 'WhatsApp', connected: false, type: 'messaging', color: 'bg-green-100 text-green-600' },
   ]);
+
+  // Pre-fill from waitlist entry
+  useEffect(() => {
+    const loadWaitlistData = async () => {
+      if (!userEmail || !isSupabaseConfigured()) return;
+
+      try {
+        const entry = await getWaitlistEntryByEmail(userEmail);
+        if (entry) {
+          setWaitlistEntry(entry);
+
+          // Pre-fill children based on school levels
+          if (entry.has_children && entry.school_levels.length > 0) {
+            const prefilledChildren: Child[] = entry.school_levels.map((level) => ({
+              id: Math.random().toString(36).substr(2, 9),
+              name: '',
+              schoolName: level,
+              activities: [],
+              color: 'bg-alto-sage/30 text-alto-navy'
+            }));
+            setFamily(prev => ({
+              ...prev,
+              children: prefilledChildren.length > 0 ? prefilledChildren : prev.children
+            }));
+          }
+
+          // Pre-select services based on tech stack
+          if (entry.tech_stack.length > 0) {
+            setServices(prev => prev.map(service => {
+              const shouldConnect =
+                (service.id === 'gmail' && entry.tech_stack.includes('Gmail')) ||
+                (service.id === 'gmail' && entry.tech_stack.includes('Outlook')) ||
+                (service.id === 'gcal' && entry.tech_stack.includes('Google Agenda')) ||
+                (service.id === 'gcal' && entry.tech_stack.includes('Apple Calendar'));
+              return shouldConnect ? { ...service, suggested: true } : service;
+            }));
+          }
+
+          console.log('Pre-filled onboarding from waitlist entry:', entry.id);
+        }
+      } catch (error) {
+        console.error('Error loading waitlist data:', error);
+      }
+    };
+
+    loadWaitlistData();
+  }, [userEmail]);
 
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [currentOrigin, setCurrentOrigin] = useState('');
@@ -193,6 +245,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ userId, onCo
             activities: child.activities,
             color: child.color
           });
+        }
+
+        // Mark waitlist entry as converted
+        if (waitlistEntry) {
+          try {
+            await markWaitlistConverted(waitlistEntry.id, userId);
+            console.log('Waitlist entry marked as converted:', waitlistEntry.id);
+          } catch (err) {
+            console.error('Error marking waitlist as converted:', err);
+          }
         }
 
         setStep(3);

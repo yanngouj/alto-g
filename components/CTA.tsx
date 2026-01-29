@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Section } from './ui/Section';
 import { Button } from './ui/Button';
-import { Send, Lock, Sparkles, ChevronRight, User, Mail, ArrowLeft, MapPin, Baby, HelpCircle } from 'lucide-react';
+import { Send, Lock, Sparkles, ChevronRight, User, Mail, ArrowLeft, MapPin, Baby, HelpCircle, Loader2, AlertCircle } from 'lucide-react';
 
 type Step = 'contact' | 'details' | 'success';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 interface FormData {
   firstName: string;
@@ -22,6 +24,8 @@ interface FormData {
 
 export const CTA: React.FC = () => {
   const [step, setStep] = useState<Step>('contact');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     email: '',
@@ -46,10 +50,30 @@ export const CTA: React.FC = () => {
     }
   };
 
-  const handleDetailsSubmit = (e: React.FormEvent) => {
+  const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate API call
-    setTimeout(() => setStep('success'), 600);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setStep('success');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Erreur lors de l\'inscription');
+      }
+    } catch (err) {
+      console.error('Waitlist submission error:', err);
+      setError('Erreur de connexion. Veuillez reessayer.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleSelection = (field: keyof FormData, value: string) => {
@@ -327,9 +351,24 @@ export const CTA: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Error Display */}
+                {error && (
+                  <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
+                    <AlertCircle size={18} className="text-red-400 mt-0.5 shrink-0" />
+                    <p className="text-red-200 text-sm">{error}</p>
+                  </div>
+                )}
+
                 <div className="pt-4">
-                  <Button type="submit" variant="secondary" size="lg" className="w-full font-bold">
-                    Valider mon inscription
+                  <Button type="submit" variant="secondary" size="lg" className="w-full font-bold" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin mr-2" />
+                        Inscription en cours...
+                      </>
+                    ) : (
+                      'Valider mon inscription'
+                    )}
                   </Button>
                 </div>
               </form>

@@ -487,3 +487,52 @@ export const upsertIntegration = async (
   if (error) throw error;
   return result as IntegrationRow;
 };
+
+// ============================================================================
+// WAITLIST FUNCTIONS
+// ============================================================================
+
+export interface WaitlistEntry {
+  id: string;
+  created_at: string;
+  email: string;
+  first_name: string;
+  city: string | null;
+  has_children: boolean;
+  family_type: string | null;
+  school_levels: string[];
+  main_pain_point: string | null;
+  current_feeling: string | null;
+  ideal_usage: string | null;
+  tech_stack: string[];
+  desired_version: string[];
+  ai_level: string | null;
+  email_sent: boolean;
+  converted_at: string | null;
+  user_id: string | null;
+}
+
+export const getWaitlistEntryByEmail = async (email: string): Promise<WaitlistEntry | null> => {
+  const { data, error } = await supabase
+    .from('waitlist_entries')
+    .select('*')
+    .eq('email', email)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as WaitlistEntry | null;
+};
+
+export const markWaitlistConverted = async (waitlistId: string, userId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('waitlist_entries')
+    .update({
+      converted_at: new Date().toISOString(),
+      user_id: userId
+    })
+    .eq('id', waitlistId);
+
+  if (error) throw error;
+};
