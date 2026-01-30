@@ -64,6 +64,24 @@
       .animate-slide-in { animation: slide-in 0.4s ease-out both; }
       .animate-slide-up { animation: slide-up 0.3s ease-out both; }
       .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
+
+      /* Animated mockup */
+      .typing-dot { animation: mockup-bounce 1s infinite; }
+      @keyframes mockup-bounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-4px); }
+      }
+      .status-online { animation: mockup-pulse 2s infinite; }
+      @keyframes mockup-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      @media (max-width: 640px) {
+        .mockup-container { transform: scale(0.85); transform-origin: top center; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .typing-dot { animation: none; }
+      }
     </style>
   <script type="importmap">
 {

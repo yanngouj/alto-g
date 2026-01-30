@@ -8,6 +8,7 @@ import { HowItWorks } from './components/HowItWorks';
 import { Testimonials } from './components/Testimonials';
 import { CTA } from './components/CTA';
 import { FloatingCTA } from './components/FloatingCTA';
+import { AnimatedMockup } from './components/AnimatedMockup';
 import { Footer } from './components/Footer';
 import { Dashboard } from './components/app/Dashboard';
 import { AuthPage } from './components/auth/AuthPage';
@@ -277,6 +278,7 @@ const App: React.FC = () => {
           prefillEmail={heroPrefill?.email}
           onSuccess={() => setWaitlistSuccess(true)}
         />
+        <AnimatedMockup />
       </main>
       <FloatingCTA hidden={waitlistSuccess} />
       <Footer />
