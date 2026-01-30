@@ -61,6 +61,12 @@ const App: React.FC = () => {
       return;
     }
 
+    if (window.location.pathname === '/auth') {
+      setView('auth');
+      setLoading(false);
+      return;
+    }
+
     // Check for auth callback (from OAuth redirect)
     if (window.location.pathname === '/auth/callback') {
       // Handle the OAuth callback
